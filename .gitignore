@@ -1,0 +1,37 @@
+# ====================================================================
+# Microchip Studio (Atmel Studio) Git Ignore Template
+# ====================================================================
+
+# --- Build Artifacts ---
+# Exclude the entire Debug and Release directories where hex/elf/obj files live
+[Dd]ebug/
+[Rr]elease/
+*.bin
+*.hex
+*.eep
+*.elf
+*.lss
+*.map
+*.sym
+*.o
+*.d
+
+# --- Microchip / Atmel Studio User-Specific Files ---
+# These store layout data, open tabs, and machine-specific tool paths
+*.atsuo
+*.suo
+*.user
+.atmelstart/
+Device_Startup/Backup/
+
+# --- Visual Studio Shell Metadata / Caches ---
+.vs/
+*.ncb
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# --- Backup and Temporary Files ---
+*.bak
+*~
