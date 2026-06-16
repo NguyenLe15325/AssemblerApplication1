@@ -27,30 +27,38 @@ led_pwm_init:
 
 led_pwm_update:
     ; --------------------------------------------------------------------------
-    ; This routine scales the 12-bit angle (0-4095) down to 8-bit brightness (0-255).
-    ; Mathematically, this is division by 16. In binary, division by 16 is 
-    ; identical to shifting all the bits to the right 4 times.
+    ; Goal: Map the 12-bit angle (0-4095) down to 8-bit brightness (0-255).
+    ; This is the same as dividing by 16 (shifting the binary number right 4 places).
+    ;
+    ; The 12-bit angle is stored across two registers:
+    ;   angle_h = bits 11-8  (upper 4 bits)
+    ;   angle_l = bits  7-0  (lower 8 bits)
+    ;
+    ; After dividing by 16, we want:
+    ;   brightness bit 7-4 = angle bits 11-8  (from angle_h)
+    ;   brightness bit 3-0 = angle bits  7-4  (top 4 bits of angle_l)
     ; --------------------------------------------------------------------------
-    mov brightness, angle_h  ; Start with the upper bits
-    mov temp, angle_l        ; And the lower bits
-    
-    ; Shift Right 1st time
-    lsr brightness           ; Logical Shift Right (moves bit 0 into Carry flag)
-    ror temp                 ; Rotate Right through Carry (moves Carry into bit 7)
-    
-    ; Shift Right 2nd time
-    lsr brightness
-    ror temp
-    
-    ; Shift Right 3rd time
-    lsr brightness
-    ror temp
-    
-    ; Shift Right 4th time
-    lsr brightness
-    ror temp
-    
-    mov brightness, temp     ; The fully shifted 8-bit result is our new brightness!
+
+    ; --- Step 1: Extract the upper 4 bits of angle_l (bits 7-4) ---
+    ; Shift angle_l right 4 times so bits 7-4 drop into positions 3-0
+    mov temp, angle_l
+    lsr temp                 ; bit 7->6, 6->5, 5->4, 4->3
+    lsr temp                 ; bit 7->6, 6->5, 5->4, 4->3
+    lsr temp                 ; bit 7->6, 6->5, 5->4, 4->3
+    lsr temp                 ; bits 7-4 are now sitting in positions 3-0
+    ; 'temp' now holds the LOWER half of brightness
+
+    ; --- Step 2: Put angle_h into the upper 4 bits of brightness ---
+    ; angle_h already has our bits in positions 3-0, we need to move them to 7-4
+    mov brightness, angle_h
+    lsl brightness           ; shift left 4 times to move bits 3-0 up to 7-4
+    lsl brightness
+    lsl brightness
+    lsl brightness
+    ; 'brightness' now holds the UPPER half of brightness
+
+    ; --- Step 3: Combine both halves ---
+    or brightness, temp      ; merge the upper 4 bits and lower 4 bits
     ret
 
 timer0_ovf_isr:

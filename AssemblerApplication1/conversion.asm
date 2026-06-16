@@ -1,15 +1,4 @@
-; ==============================================================================
-; Binary to Decimal Conversion Utilities
-; ------------------------------------------------------------------------------
-; This module converts a 16-bit binary number (like our 12-bit angle 0-4095)
-; into printable ASCII characters on the LCD. Since the ATmega328P doesn't have
-; a hardware division instruction, we use the "Repeated Subtraction" method.
-; ==============================================================================
 
-convert_display:
-    ; We subtract 1000 repeatedly until we underflow. The number of successful 
-    ; subtractions becomes the "thousands" digit. Then we do the same for 100s and 10s.
-    
 ; ==============================================================================
 ; Binary to Decimal Conversion
 ; ------------------------------------------------------------------------------
