@@ -91,8 +91,8 @@ count_10s:
     
     mov temp, angle_l        ; Move the remaining number into temp
     
-    ldi r21, '0'
-    add temp, r21            ; Add the ASCII value of '0' to convert it to a printable character
+    ldi r20, '0'             ; Use r20 (safe - digit counting is done)
+    add temp, r20            ; Add ASCII '0' to convert to a printable character
     
     rcall lcd_data           ; Print the final digit
     

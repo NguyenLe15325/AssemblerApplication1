@@ -13,9 +13,9 @@ led_pwm_init:
     ; 1. Set the Data Direction Register for Port B, Bit 5 to OUTPUT.
     sbi DDRB, 5              ; PB5 is connected to the Arduino's built-in LED.
     
-    ; 2. Configure Timer0 to run at full CPU speed (No Prescaler).
-    ; At 16 MHz, the timer ticks 16,000,000 times a second.
-    ldi temp, (1<<CS00)      
+    ; Configure Timer0 clock source: CS02=0, CS01=0, CS00=1 = No Prescaler (fastest)
+    ; Register TCCR0B starts at 0, so only setting CS00=1 is needed.
+    ldi temp, (1<<CS00)
     out TCCR0B, temp
     
     ; 3. Enable the Timer0 Overflow Interrupt.
@@ -27,38 +27,40 @@ led_pwm_init:
 
 led_pwm_update:
     ; --------------------------------------------------------------------------
-    ; Goal: Map the 12-bit angle (0-4095) down to 8-bit brightness (0-255).
-    ; This is the same as dividing by 16 (shifting the binary number right 4 places).
+    ; Goal: Map the 12-bit angle (0-4095) to 8-bit brightness (0-255) = angle / 16
     ;
-    ; The 12-bit angle is stored across two registers:
-    ;   angle_h = bits 11-8  (upper 4 bits)
-    ;   angle_l = bits  7-0  (lower 8 bits)
+    ; The 12-bit angle occupies two registers like this (bit positions):
     ;
-    ; After dividing by 16, we want:
-    ;   brightness bit 7-4 = angle bits 11-8  (from angle_h)
-    ;   brightness bit 3-0 = angle bits  7-4  (top 4 bits of angle_l)
+    ;   angle_h: [ 0   0   0   0 | 11  10   9   8 ]
+    ;   angle_l: [ 7   6   5   4 |  3   2   1   0 ]
+    ;
+    ; Dividing by 16 = shift right 4. The 8-bit result keeps bits [11:4]:
+    ;
+    ;   brightness: [ 11  10   9   8 |  7   6   5   4 ]
+    ;                 ^-- angle_h --^   ^-- angle_l --^
+    ;                 (shift left 4)    (shift right 4)
+    ;
+    ; Bits [3:0] of the angle are simply discarded (not needed).
     ; --------------------------------------------------------------------------
 
-    ; --- Step 1: Extract the upper 4 bits of angle_l (bits 7-4) ---
-    ; Shift angle_l right 4 times so bits 7-4 drop into positions 3-0
+    ; --- Step 1: Get bits [7:4] from angle_l into positions [3:0] ---
     mov temp, angle_l
-    lsr temp                 ; bit 7->6, 6->5, 5->4, 4->3
-    lsr temp                 ; bit 7->6, 6->5, 5->4, 4->3
-    lsr temp                 ; bit 7->6, 6->5, 5->4, 4->3
-    lsr temp                 ; bits 7-4 are now sitting in positions 3-0
+    lsr temp                 ; shift right 1
+    lsr temp                 ; shift right 2
+    lsr temp                 ; shift right 3
+    lsr temp                 ; shift right 4 → bits [7:4] now sit in [3:0]
     ; 'temp' now holds the LOWER half of brightness
 
-    ; --- Step 2: Put angle_h into the upper 4 bits of brightness ---
-    ; angle_h already has our bits in positions 3-0, we need to move them to 7-4
+    ; --- Step 2: Get bits [11:8] from angle_h into positions [7:4] ---
     mov brightness, angle_h
-    lsl brightness           ; shift left 4 times to move bits 3-0 up to 7-4
-    lsl brightness
-    lsl brightness
-    lsl brightness
+    lsl brightness           ; shift left 1
+    lsl brightness           ; shift left 2
+    lsl brightness           ; shift left 3
+    lsl brightness           ; shift left 4 → bits [3:0] now sit in [7:4]
     ; 'brightness' now holds the UPPER half of brightness
 
     ; --- Step 3: Combine both halves ---
-    or brightness, temp      ; merge the upper 4 bits and lower 4 bits
+    or brightness, temp      ; merge upper [7:4] and lower [3:0] into one byte
     ret
 
 timer0_ovf_isr:

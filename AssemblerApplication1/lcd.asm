@@ -92,13 +92,14 @@ lcd_write:
 lcd_nibble:
     ori temp, 0x08           ; Turn ON the Backlight bit (P3 = 1)
     
-    ; --- Pulse Enable (EN) HIGH ---
-    ori temp, 0x04           ; Turn ON the Enable bit (P2 = 1)
-    rcall pcf_send           ; Send the payload over I2C
+    mov r18, temp            ; Save the byte (with backlight ON, EN still OFF)
     
-    ; --- Pulse Enable (EN) LOW ---
-    andi temp, 0xFB          ; Turn OFF the Enable bit (P2 = 0) by masking with 11111011
-    rcall pcf_send           ; Send the payload over I2C
+    ; --- Pulse Enable (EN) HIGH then LOW ---
+    ori temp, 0x04           ; Turn ON the Enable bit (P2 = 1)
+    rcall pcf_send           ; Send: EN HIGH
+    
+    mov temp, r18            ; Restore the saved byte (EN bit is already OFF in r18)
+    rcall pcf_send           ; Send: EN LOW
     
     ret
 
