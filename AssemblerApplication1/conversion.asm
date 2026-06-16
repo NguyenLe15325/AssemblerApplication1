@@ -16,71 +16,67 @@ convert_display:
     ; --------------------------------------------------------------------------
     ; 1. EXTRACT THOUSANDS DIGIT
     ; --------------------------------------------------------------------------
-    ldi r20, '0' - 1         ; Set our digit counter to the ASCII character just before '0'
-                             ; (It will immediately become '0' on the first loop)
+    ; Strategy: Subtract 1000 repeatedly. Count only successful subtractions.
+    ; We start at '0' and increment AFTER a successful subtraction.
+    ldi r20, '0'
 
 count_1000s:
-    inc r20                  ; Increment our digit counter ('0' -> '1' -> '2'...)
-    
-    ; Subtract 1000 from our 16-bit number (angle_h : angle_l)
-    subi angle_l, low(1000)  ; Subtract lower 8 bits of 1000
-    sbci angle_h, high(1000) ; Subtract upper 8 bits of 1000 (with carry from previous step)
-    
-    brcc count_1000s         ; Branch if Carry Cleared (meaning the result is still >= 0)
-                             ; If >= 0, loop back and subtract 1000 again!
-                             
-    ; If we got here, the result dropped below 0! We subtracted 1000 one time too many.
-    ; So we simply add 1000 back to the number to repair the damage.
+    subi angle_l, low(1000)   ; Subtract 1000 from the 16-bit angle
+    sbci angle_h, high(1000)
+    brcs done_1000s           ; Carry SET = went below 0 → stop, we subtracted too much
+    inc r20                   ; Subtraction was successful → count it!
+    rjmp count_1000s
+
+done_1000s:
+    ; We went one subtraction too far. Add 1000 back to repair the number.
     ldi temp, low(1000)
     add angle_l, temp
     ldi temp, high(1000)
     adc angle_h, temp
     
-    rcall print_digit        ; Print the thousands digit to the LCD
+    rcall print_digit         ; Print the thousands digit to the LCD
     
     
     ; --------------------------------------------------------------------------
     ; 2. EXTRACT HUNDREDS DIGIT
     ; --------------------------------------------------------------------------
-    ldi r20, '0' - 1         ; Reset digit counter
+    ldi r20, '0'
 
 count_100s:
-    inc r20
-    
-    subi angle_l, low(100)   ; Subtract 100
+    subi angle_l, low(100)
     sbci angle_h, high(100)
-    
-    brcc count_100s          ; If >= 0, loop back and subtract 100 again
-    
-    ; We went below 0! Add 100 back to repair.
+    brcs done_100s            ; Carry SET = went below 0 → stop
+    inc r20                   ; Subtraction was successful → count it!
+    rjmp count_100s
+
+done_100s:
     ldi temp, low(100)
     add angle_l, temp
     ldi temp, high(100)
     adc angle_h, temp
     
-    rcall print_digit        ; Print the hundreds digit to the LCD
+    rcall print_digit         ; Print the hundreds digit to the LCD
     
     
     ; --------------------------------------------------------------------------
     ; 3. EXTRACT TENS DIGIT
     ; --------------------------------------------------------------------------
-    ldi r20, '0' - 1         ; Reset digit counter
+    ldi r20, '0'
 
 count_10s:
-    inc r20
-    
-    subi angle_l, 10         ; Subtract 10
+    subi angle_l, 10
     sbci angle_h, 0
-    
-    brcc count_10s           ; If >= 0, loop back and subtract 10 again
-    
-    ; We went below 0! Add 10 back to repair.
+    brcs done_10s             ; Carry SET = went below 0 → stop
+    inc r20                   ; Subtraction was successful → count it!
+    rjmp count_10s
+
+done_10s:
     ldi temp, 10
     add angle_l, temp
     ldi temp, 0
     adc angle_h, temp
     
-    rcall print_digit        ; Print the tens digit to the LCD
+    rcall print_digit         ; Print the tens digit to the LCD
     
     
     ; --------------------------------------------------------------------------
@@ -89,14 +85,12 @@ count_10s:
     ; After extracting 1000s, 100s, and 10s, whatever remains in angle_l 
     ; IS the ones digit! (It will be a number between 0 and 9)
     
-    mov temp, angle_l        ; Move the remaining number into temp
+    mov temp, angle_l
+    ldi r20, '0'
+    add temp, r20             ; Add ASCII '0' to convert number to printable character
+    rcall lcd_data
     
-    ldi r20, '0'             ; Use r20 (safe - digit counting is done)
-    add temp, r20            ; Add ASCII '0' to convert to a printable character
-    
-    rcall lcd_data           ; Print the final digit
-    
-    ret                      ; Conversion complete!
+    ret
 
 
 ; ------------------------------------------------------------------------------
