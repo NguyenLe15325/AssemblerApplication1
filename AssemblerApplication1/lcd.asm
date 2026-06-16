@@ -1,16 +1,25 @@
-.def lcd_mode     = r17
-.equ LCD_W = 0x4E               ; 0x27 << 1
+; ==============================================================================
+; I2C LCD Driver (HD44780 + PCF8574)
+; ------------------------------------------------------------------------------
+; This driver controls a standard 16x2 character LCD that is connected via an
+; I2C backpack (PCF8574). It operates the LCD in 4-bit mode to save pins.
+; Every byte of data sent to the LCD is split into two 4-bit "nibbles".
+; ==============================================================================
+
+.def lcd_mode     = r17                 ; Register to track whether we are sending Data (1) or a Command (0)
+.equ LCD_W = 0x4E                       ; I2C Write Address for the PCF8574 (0x27 shifted left by 1)
 
 lcd_init:
+    ; 1. The HD44780 requires a specific startup sequence to reliably enter 4-bit mode.
     rcall delay_5ms
-    ldi temp, 0x30
+    ldi temp, 0x30           ; Wake up command 1
     rcall lcd_nibble
     rcall delay_5ms
-    ldi temp, 0x30
+    ldi temp, 0x30           ; Wake up command 2
     rcall lcd_nibble
-    ldi temp, 0x30
+    ldi temp, 0x30           ; Wake up command 3
     rcall lcd_nibble
-    ldi temp, 0x20
+    ldi temp, 0x20           ; Force 4-bit operational mode
     rcall lcd_nibble
     
     ldi temp, 0x28              ; 2 lines, 5x8 font matrix
