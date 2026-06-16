@@ -10,19 +10,13 @@ led_pwm_init:
     ret
 
 led_pwm_update:
-    mov brightness, angle_h
     mov temp, angle_l
+    swap temp
+    andi temp, 0x0F
     
-    lsr brightness
-    ror temp
-    lsr brightness
-    ror temp
-    lsr brightness
-    ror temp
-    lsr brightness
-    ror temp
-    
-    mov brightness, temp
+    mov brightness, angle_h
+    swap brightness
+    or brightness, temp
     ret
 
 timer0_ovf_isr:
