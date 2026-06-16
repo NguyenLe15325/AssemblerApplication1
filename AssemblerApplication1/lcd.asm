@@ -1,4 +1,4 @@
-; --- I2C LCD Driver (HD44780 + PCF8574) ---
+.def lcd_mode     = r17
 .equ LCD_W = 0x4E               ; 0x27 << 1
 
 lcd_init:
@@ -10,7 +10,7 @@ lcd_init:
     rcall lcd_nibble
     ldi temp, 0x30
     rcall lcd_nibble
-    ldi temp, 0x20              ; Force 4-bit operational mode
+    ldi temp, 0x20
     rcall lcd_nibble
     
     ldi temp, 0x28              ; 2 lines, 5x8 font matrix

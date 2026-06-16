@@ -76,6 +76,9 @@
     <Compile Include="lcd.asm">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="led_pwm.asm">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="main.asm">
       <SubType>Code</SubType>
     </Compile>
