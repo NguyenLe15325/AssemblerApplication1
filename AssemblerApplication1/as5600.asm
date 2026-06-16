@@ -2,7 +2,7 @@ as5600_read:
     rcall twi_start
     ldi temp, 0x6C           ; AS5600 Write Address
     rcall twi_write
-    ldi temp, 0x0C           ; RAW ANGLE MSB
+    ldi temp, 0x0C           ; RAW ANGLE Register Address
     rcall twi_write
     
     rcall twi_start

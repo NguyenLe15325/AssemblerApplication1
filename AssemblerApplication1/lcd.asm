@@ -10,30 +10,23 @@
 .equ LCD_W    = 0x4E
 
 lcd_init:
+	; 4 bit mode initialize sequence
     rcall delay_5ms
-    
     ldi temp, 0x30
     rcall lcd_nibble
     rcall delay_5ms
-    
     ldi temp, 0x30
     rcall lcd_nibble
-    
     ldi temp, 0x30
     rcall lcd_nibble
-    
     ldi temp, 0x20
     rcall lcd_nibble
-    
-    ldi temp, 0x28
+    ldi temp, 0x28	; 2 lines, 5x8 font matrix
     rcall lcd_cmd
-    
-    ldi temp, 0x0C
+    ldi temp, 0x0C	; Display ON, cursor OFF
     rcall lcd_cmd
-    
     ldi temp, 0x01
-    rcall lcd_cmd
-    
+    rcall lcd_cmd	; Clear screen
     rcall delay_5ms
     ret
 
@@ -68,7 +61,6 @@ lcd_nibble:
     rcall pcf_send
     mov temp, r18
     rcall pcf_send
-    
     ret
 
 pcf_send:

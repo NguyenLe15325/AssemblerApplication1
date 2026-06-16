@@ -1,40 +1,66 @@
 convert_display:
-    ldi r20, '0'-1
-d1k:
-    inc r20
+    ldi r20, '0'
+
+count_1000s:
     subi angle_l, low(1000)
     sbci angle_h, high(1000)
-    brcc d1k
-    subi angle_l, low(-1000)
-    sbci angle_h, high(-1000)
-    rcall print_r
+    brcs restore_1000s
     
-    ldi r20, '0'-1
-d1h:
     inc r20
+    rjmp count_1000s
+
+restore_1000s:
+    ldi temp, low(1000)
+    add angle_l, temp
+    ldi temp, high(1000)
+    adc angle_h, temp
+    
+    rcall print_digit
+    
+    ldi r20, '0'
+
+count_100s:
     subi angle_l, low(100)
     sbci angle_h, high(100)
-    brcc d1h
-    subi angle_l, low(-100)
-    sbci angle_h, high(-100)
-    rcall print_r
+    brcs restore_100s
     
-    ldi r20, '0'-1
-d1t:
     inc r20
+    rjmp count_100s
+
+restore_100s:
+    ldi temp, low(100)
+    add angle_l, temp
+    ldi temp, high(100)
+    adc angle_h, temp
+    
+    rcall print_digit
+    
+    ldi r20, '0'
+
+count_10s:
     subi angle_l, 10
     sbci angle_h, 0
-    brcc d1t
-    subi angle_l, -10
+    brcs restore_10s
     
-    mov temp, r20
-    rcall lcd_data
+    inc r20
+    rjmp count_10s
+
+restore_10s:
+    ldi temp, 10
+    add angle_l, temp
+    ldi temp, 0
+    adc angle_h, temp
+    
+    rcall print_digit
+    
     mov temp, angle_l
-    subi temp, -'0'
+    ldi r20, '0'
+    add temp, r20
     rcall lcd_data
+    
     ret
 
-print_r:
+print_digit:
     mov temp, r20
     rcall lcd_data
     ret
